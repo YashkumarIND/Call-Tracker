@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Trades</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/trades.css') }}">
+    <link href="https://unpkg.com/tailwindcss@^1.0/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        html, body {
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <section class="text-gray-600 body-font">
+        <div class="container px-5 py-24 mx-auto">
+            <div class="max-w-2xl mx-auto bg-white rounded-lg overflow-hidden md:max-w-2xl">
+                <div class="text-center mb-10">
+                    <h1 class="sm:text-3xl text-2xl font-medium text-center title-font text-gray-900 mb-4">Check Trade Status</h1>
+                    <p class="text-base leading-relaxed xl:w-2/4 lg:w-3/4 mx-auto">Make trades, make mistakes, make profits!!!</p>
+                </div>
+               
+                <div class="scroll-container">
+                    <div class="flex flex-no-wrap -m-4">
+                        {% for trade in user_trades %}
+                            <div class="p-4 lg:w-1/4 sm:w-1/2 w-full">
+                                <div class="bg-gray-200 p-6 rounded-lg">
+                                    <h2 class="font-medium title-font tracking-widest text-gray-900 mb-4 text-sm text-center sm:text-left">{{ trade.tradingSymbol }}</h2>
+                                    <nav class="flex flex-col sm:items-start sm:text-left text-center items-center -mb-1 space-y-2.5">
+                                        <a>
+                                            Buy Price: {{ trade.BuyPrice }}
+                                        </a>
+                                        <a>
+                                            Target Price: {{ trade.Target }}
+                                        </a>
+                                        <a>
+                                            Stop-Loss Price: {{ trade.StopLoss }}
+                                        </a>
+                                        <a>
+                                            Success: {{ trade.Success }}
+                                        </a>
+                                        <a>
+                                            Gain/Loss %: {{ trade.GainLoss }}
+                                        </a>
+                                    </nav>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                
+                <button class="flex mx-auto mt-16 text-white bg-indigo-500 border-0 py-2 px-8 focus:outline-none hover:bg-indigo-600 rounded text-lg">
+                    <a href="{{ url_for('home') }}">Make New Trade</a>
+                </button>
+                
+            </div>
+        </div>
+    </section>
+</body>
+</html>

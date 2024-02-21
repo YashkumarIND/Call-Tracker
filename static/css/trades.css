@@ -1,0 +1,39 @@
+/* trades.css */
+
+/* Styles for the container of the table */
+.container {
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+/* Styles for the table */
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+/* Styles for table cells */
+th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+/* Styles for the navigation button */
+.button-container {
+    text-align: center;
+    margin-top: 16px;
+}
+
+.button-container a {
+    display: inline-block;
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 20px;
+    text-decoration: none;
+    border-radius: 5px;
+}
+
+.button-container a:hover {
+    background-color: #45a049;
+}
