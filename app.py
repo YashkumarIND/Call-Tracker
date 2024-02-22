@@ -11,11 +11,14 @@ from models.models import db, User, CallBook
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.secret_key = 'your_secret_key_here'
+app.secret_key = '4bdc90ff4790171cf473075bcd717c27b3c25777d35ddefd07a3fd6187e8f6da'
 
 # Initialize SQLAlchemy and migrate
 db.init_app(app)
 migrate = Migrate(app, db)
+
+scheduler = BackgroundScheduler()
+scheduler.start()
 
 # Ensure the tables are created
 with app.app_context():
@@ -46,7 +49,7 @@ def update_trades():
         params = {
             "engine": "google_finance",
             "q": f"{scrip_name}:NSE",
-            "api_key": ""  # Replace with your actual Serpapi API key
+            "api_key": "4bdc90ff4790171cf473075bcd717c27b3c25777d35ddefd07a3fd6187e8f6da" 
         }
         search = GoogleSearch(params)
         results = search.get_dict()
@@ -61,7 +64,7 @@ def update_trades():
             elif current_price <= stop_loss:
                 status = 'Stop Loss Hit'
             else:
-                status = 'Active' if current_price > stop_loss else 'Exit'
+                status = 'Hold' if current_price > stop_loss else 'Exit'
         elif position == 'Short':
             if current_price <= target1 and current_price > target2:
                 status = 'Target 1 Hit'
@@ -70,7 +73,7 @@ def update_trades():
             elif current_price >= stop_loss:
                 status = 'Stop Loss Hit'
             else:
-                status = 'Active' if current_price < stop_loss else 'Exit'
+                status = 'Hold' if current_price < stop_loss else 'Exit'
         else:
             status = 'Invalid Position'
 
@@ -182,9 +185,9 @@ def callbook():
             Target1=request.form['Target1'],
             Target2=request.form['Target2'],
             StopLoss=request.form['StopLoss'],
-            Status='Active',
+            Status='Hold',
             # Success=False,
-            # GainLoss=None,
+            GainLoss=None,
             Remark=request.form['remark'],
             user_id=user_id
         )

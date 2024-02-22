@@ -25,7 +25,7 @@ class CallBook(db.Model):
     StopLoss = db.Column(db.Float, nullable=False)
     Status = db.Column(db.String(50), nullable=False)
     # Success = db.Column(db.Boolean, default=False, nullable=True)
-    # GainLoss = db.Column(db.Float, default=None, nullable=True)
+    GainLoss = db.Column(db.Float, nullable=True)
     Remark = db.Column(db.String(255), nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship('User', backref='trades', lazy=True)

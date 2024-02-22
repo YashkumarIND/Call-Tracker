@@ -33,6 +33,7 @@
                                 <th class="px-4 py-2">Target 1</th>
                                 <th class="px-4 py-2">Target 2</th>
                                 <th class="px-4 py-2">Stop Loss</th>
+                                <th class="px-4 py-2">Status</th>
                                 <th class="px-4 py-2">Remark</th>
                             </tr>
                         </thead>
@@ -48,6 +49,7 @@
                                     <td class="border px-4 py-2">{{ trade.Target1 }}</td>
                                     <td class="border px-4 py-2">{{ trade.Target2 }}</td>
                                     <td class="border px-4 py-2">{{ trade.StopLoss }}</td>
+                                    <td class="border px-4 py-2">{{trade.Status}}</td>
                                     <td class="border px-4 py-2">{{ trade.Remark }}</td>
                                 </tr>
                             {% endfor %}
