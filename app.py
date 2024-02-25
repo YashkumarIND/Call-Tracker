@@ -38,7 +38,7 @@ with app.app_context():
 @app.route('/api/update-trades', methods=['POST','GET'])
 def update_trades():
     try:
-        # Retrieve active trades from the CallBook table
+        # Retrieve active trades from the CallBook table where stop loss and target 2 are not hit
         active_trades = CallBook.query.filter(CallBook.Status == 'Hold').all()
 
         for trade in active_trades:
@@ -59,7 +59,6 @@ def update_trades():
             results = search.get_dict()
             price_string = results["summary"]["price"]
             clean_price_string = re.sub(r'[^\d.]', '', price_string)
-
             current_price = float(clean_price_string)
 
             # Determine trade status based on position and target conditions
@@ -71,7 +70,7 @@ def update_trades():
                 elif current_price <= stop_loss:
                     status = 'Stop Loss Hit'
                 else:
-                    status = 'Hold' if current_price > stop_loss else 'Exit'
+                    status = 'Hold'
             elif position == 'Short':
                 if current_price <= target1 and current_price > target2:
                     status = 'Target 1 Hit'
@@ -80,7 +79,7 @@ def update_trades():
                 elif current_price >= stop_loss:
                     status = 'Stop Loss Hit'
                 else:
-                    status = 'Hold' if current_price < stop_loss else 'Exit'
+                    status = 'Hold'
             else:
                 status = 'Invalid Position'
 
@@ -93,6 +92,7 @@ def update_trades():
     except Exception as e:
         # Handle the exception (e.g., log error)
         return jsonify({'error': str(e)}), 500
+
 
 # Schedule the update_trades function to run every 15 minutes from 9:15 AM to 3:30 PM, Monday to Friday
 scheduler = BackgroundScheduler()
@@ -138,7 +138,7 @@ def all_trades():
 def active_trades():
     try:
         # Retrieve trades from the CallBook table where stop loss has not been hit
-        trades = CallBook.query.filter(CallBook.Status == 'Hold').all()
+        trades = CallBook.query.filter(CallBook.Status == 'Hold' or CallBook.Status!='Target 2 Hit').all()
 
         # Convert trades to a list of dictionaries
         trades_data = []
@@ -222,6 +222,34 @@ def callbook():
 
     # If the request method is GET, render the callbook.html template
     return render_template('callbook.html', symbols=symbols_sorted)
+
+@app.route('/signup', methods=['GET', 'POST'])
+def signup():
+    if request.method == 'POST':
+        username = request.form['uniqueusername']
+        password = request.form['password']
+        confirm_password = request.form['confirmpassword']
+
+        # Check if the username already exists
+        existing_user = User.query.filter_by(username=username).first()
+        if existing_user:
+            flash('Username already exists. Please choose a different one.', 'error')
+            return redirect(url_for('signup'))
+
+        # Check if the password and confirm password match
+        if password != confirm_password:
+            flash('Passwords do not match. Please try again.', 'error')
+            return redirect(url_for('signup'))
+
+        # Create a new user
+        new_user = User(username=username, password=password)
+        db.session.add(new_user)
+        db.session.commit()
+
+        flash('Sign up successful. Please log in.', 'success')
+        return redirect(url_for('login'))
+    
+    return render_template('signup.html')
 
 # Define the trades route
 @app.route('/trades')
