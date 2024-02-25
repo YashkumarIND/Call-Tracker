@@ -35,6 +35,7 @@
                                 <th class="px-4 py-2">Stop Loss</th>
                                 <th class="px-4 py-2">Status</th>
                                 <th class="px-4 py-2">Remark</th>
+                                <th class="px-4 py-2">% Yeild</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -51,6 +52,7 @@
                                     <td class="border px-4 py-2">{{ trade.StopLoss }}</td>
                                     <td class="border px-4 py-2">{{trade.Status}}</td>
                                     <td class="border px-4 py-2">{{ trade.Remark }}</td>
+                                    <td class="border px-4 py-2">{{trade.GainLoss}}</td>
                                 </tr>
                             {% endfor %}
                         </tbody>

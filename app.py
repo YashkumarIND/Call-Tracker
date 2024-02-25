@@ -23,15 +23,15 @@ scheduler = BackgroundScheduler()
 scheduler.start()
 
 # Ensure the tables are created
-with app.app_context():
-    db.create_all()
+# with app.app_context():
+#     db.create_all()
 
-    # Check if the default user exists, create if not
-    existing_user = User.query.filter_by(username='yashkumarvispute').first()
-    if not existing_user:
-        test_user = User(username='yashkumarvispute', password='ookook')
-        db.session.add(test_user)
-        db.session.commit()
+#     # Check if the default user exists, create if not
+#     existing_user = User.query.filter_by(username='yashkumarvispute').first()
+#     if not existing_user:
+#         test_user = User(username='yashkumarvispute', password='ookook')
+#         db.session.add(test_user)
+#         db.session.commit()
 
 # Define the update_trades route
         
@@ -48,6 +48,7 @@ def update_trades():
             target1 = trade.Target1
             target2 = trade.Target2
             stop_loss = trade.StopLoss
+            entry_price = trade.EntryPrice
 
             # Use Serpapi to get real-time data
             params = {
@@ -60,6 +61,9 @@ def update_trades():
             price_string = results["summary"]["price"]
             clean_price_string = re.sub(r'[^\d.]', '', price_string)
             current_price = float(clean_price_string)
+
+            #GainLoss Percentage Calculation
+            gain_loss = round(((current_price - entry_price) / entry_price * 100),2)
 
             # Determine trade status based on position and target conditions
             if position == 'Long':
@@ -85,6 +89,7 @@ def update_trades():
 
             # Update the status of the trade in the database
             trade.Status = status
+            trade.GainLoss=gain_loss
             db.session.commit()
 
         return jsonify({'message': 'Trades updated successfully'}), 200
@@ -252,16 +257,23 @@ def signup():
     return render_template('signup.html')
 
 # Define the trades route
+
 @app.route('/trades')
 def trades():
     user_id = session.get('user_id')
 
     if user_id is None:
         return redirect(url_for('login'))
+    
+    user=User.query.filter_by(id=user_id).first()
 
-    user_trades = CallBook.query.filter_by(user_id=user_id).all()
+    if user.username == 'admin':
+        user_trades = CallBook.query.all()
+    else:
+        user_trades = CallBook.query.filter_by(user_id=user_id).all()
 
     return render_template('trades.html', user_trades=user_trades)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
