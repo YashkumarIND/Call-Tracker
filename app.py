@@ -37,66 +37,70 @@ scheduler.start()
         
 @app.route('/api/update-trades', methods=['POST','GET'])
 def update_trades():
-    try:
-        # Retrieve active trades from the CallBook table where stop loss and target 2 are not hit
-        active_trades = CallBook.query.filter(CallBook.Status == 'Hold').all()
+    with app.app_context():
+        try:
+            # Retrieve active trades from the CallBook table where stop loss and target 2 are not hit
+            active_trades = CallBook.query.filter(CallBook.Status == 'Hold').all()
 
-        for trade in active_trades:
-            # Retrieve trade details
-            scrip_name = trade.ScripName
-            position = trade.Position
-            target1 = trade.Target1
-            target2 = trade.Target2
-            stop_loss = trade.StopLoss
-            entry_price = trade.EntryPrice
+            for trade in active_trades:
+                # Retrieve trade details
+                scrip_name = trade.ScripName
+                position = trade.Position
+                target1 = trade.Target1
+                target2 = trade.Target2
+                stop_loss = trade.StopLoss
+                entry_price = trade.EntryPrice
 
-            # Use Serpapi to get real-time data
-            params = {
-                "engine": "google_finance",
-                "q": f"{scrip_name}:NSE",
-                "api_key": "4bdc90ff4790171cf473075bcd717c27b3c25777d35ddefd07a3fd6187e8f6da"
-            }
-            search = GoogleSearch(params)
-            results = search.get_dict()
-            price_string = results["summary"]["price"]
-            clean_price_string = re.sub(r'[^\d.]', '', price_string)
-            current_price = float(clean_price_string)
+                # Use Serpapi to get real-time data
+                params = {
+                    "engine": "google_finance",
+                    "q": f"{scrip_name}:NSE",
+                    "api_key": "4bdc90ff4790171cf473075bcd717c27b3c25777d35ddefd07a3fd6187e8f6da"
+                }
+                search = GoogleSearch(params)
+                results = search.get_dict()
+                price_string = results["summary"]["price"]
+                clean_price_string = re.sub(r'[^\d.]', '', price_string)
+                current_price = float(clean_price_string)
 
-            #GainLoss Percentage Calculation
-            gain_loss = round(((current_price - entry_price) / entry_price * 100),2)
+                
 
-            # Determine trade status based on position and target conditions
-            if position == 'Long':
-                if current_price >= target1 and current_price < target2:
-                    status = 'Target 1 Hit'
-                elif current_price >= target2:
-                    status = 'Target 2 Hit'
-                elif current_price <= stop_loss:
-                    status = 'Stop Loss Hit'
+                # Determine trade status based on position and target conditions
+                if position == 'Long':
+                    if current_price >= target1 and current_price < target2:
+                        status = 'Target 1 Hit'
+                    elif current_price >= target2:
+                        status = 'Target 2 Hit'
+                    elif current_price <= stop_loss:
+                        status = 'Stop Loss Hit'
+                    else:
+                        status = 'Hold'
+                elif position == 'Short':
+                    if current_price <= target1 and current_price > target2:
+                        status = 'Target 1 Hit'
+                    elif current_price <= target2:
+                        status = 'Target 2 Hit'
+                    elif current_price >= stop_loss:
+                        status = 'Stop Loss Hit'
+                    else:
+                        status = 'Hold'
                 else:
-                    status = 'Hold'
-            elif position == 'Short':
-                if current_price <= target1 and current_price > target2:
-                    status = 'Target 1 Hit'
-                elif current_price <= target2:
-                    status = 'Target 2 Hit'
-                elif current_price >= stop_loss:
-                    status = 'Stop Loss Hit'
-                else:
-                    status = 'Hold'
-            else:
-                status = 'Invalid Position'
+                    status = 'Invalid Position'
 
-            # Update the status of the trade in the database
-            trade.Status = status
-            trade.GainLoss=gain_loss
-            db.session.commit()
 
-        return jsonify({'message': 'Trades updated successfully'}), 200
+                #GainLoss Percentage Calculation
+                gain_loss = round(((current_price - entry_price) / entry_price * 100),2)
 
-    except Exception as e:
-        # Handle the exception (e.g., log error)
-        return jsonify({'error': str(e)}), 500
+                # Update the status of the trade in the database
+                trade.Status = status
+                trade.GainLoss=gain_loss
+                db.session.commit()
+
+            return jsonify({'message': 'Trades updated successfully'}), 200
+
+        except Exception as e:
+            # Handle the exception (e.g., log error)
+            return jsonify({'error': str(e)}), 500
 
 
 # Schedule the update_trades function to run every 15 minutes from 9:15 AM to 3:30 PM, Monday to Friday
@@ -273,6 +277,21 @@ def trades():
         user_trades = CallBook.query.filter_by(user_id=user_id).all()
 
     return render_template('trades.html', user_trades=user_trades)
+
+
+@app.route('/delete-trades', methods=['DELETE'])
+def delete_trades():
+    with app.app_context():
+        try:
+            db.session.query(CallBook).delete()
+            db.session.commit()
+            print("All trades deleted successfully.")
+            return "All trades deleted successfully."
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error deleting trades: {str(e)}")
+            return f"Error deleting trades: {str(e)}", 500
+
 
 
 if __name__ == '__main__':
