@@ -4,69 +4,57 @@
     <meta charset="UTF-8">
     <title>Trades</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/trades.css') }}">
-    <link href="https://unpkg.com/tailwindcss@^1.0/dist/tailwind.min.css" rel="stylesheet">
-    <style>
-        html, body {
-            height: 100%;
-        }
-    </style>
+    <link href="https://unpkg.com/tailwindcss@^2.0/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body>
+<body class="bg-gray-100">
     <section class="text-gray-600 body-font">
-        <div class="container px-5 py-24 mx-auto">
-            <div class="max-w-full mx-auto bg-white rounded-lg">
-                <div class="text-center mb-10">
-                    <h1 class="sm:text-3xl text-2xl font-medium text-center title-font text-gray-900 mb-4">Check Trade Status</h1>
-                    <p class="text-base leading-relaxed xl:w-2/4 lg:w-3/4 mx-auto">Make trades, make mistakes, make profits!!!</p>
-                </div>
-    
-                <div class="overflow-x-auto">
-                    <table class="w-full table-auto">
-                        <thead>
-                            <tr>
-                                <th class="px-4 py-2">TimeStamp</th>
-                                <th class="px-4 py-2">Analyst Name</th>
-                                <th class="px-4 py-2">Date</th>
-                                <th class="px-4 py-2">Scrip Name</th>
-                                <th class="px-4 py-2">Position</th>
-                                <th class="px-4 py-2">Entry Price</th>
-                                <th class="px-4 py-2">Target 1</th>
-                                <th class="px-4 py-2">Target 2</th>
-                                <th class="px-4 py-2">Stop Loss</th>
-                                <th class="px-4 py-2">Status</th>
-                                <th class="px-4 py-2">Remark</th>
-                                <th class="px-4 py-2">% Yeild</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for trade in user_trades %}
-                                <tr>
-                                    <td class="border px-4 py-2">{{ trade.TimeStamp }}</td>
-                                    <td class="border px-4 py-2">{{ trade.AnalystName }}</td>
-                                    <td class="border px-4 py-2">{{ trade.Date }}</td>
-                                    <td class="border px-4 py-2">{{ trade.ScripName }}</td>
-                                    <td class="border px-4 py-2">{{ trade.Position }}</td>
-                                    <td class="border px-4 py-2">{{ trade.EntryPrice }}</td>
-                                    <td class="border px-4 py-2">{{ trade.Target1 }}</td>
-                                    <td class="border px-4 py-2">{{ trade.Target2 }}</td>
-                                    <td class="border px-4 py-2">{{ trade.StopLoss }}</td>
-                                    <td class="border px-4 py-2">{{trade.Status}}</td>
-                                    <td class="border px-4 py-2">{{ trade.Remark }}</td>
-                                    <td class="border px-4 py-2">{{trade.GainLoss}}</td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-    
-                <div class="text-center mt-8">
-                    <button class="text-white bg-indigo-500 border-0 py-2 px-8 focus:outline-none hover:bg-indigo-600 rounded text-lg">
-                        <a href="{{ url_for('callbook') }}">Make New Trade</a>
-                    </button>
-                </div>
-            </div>
+        <div class="text-center mb-10 px-4 md:px-0">
+            <h1 class="sm:text-3xl text-2xl font-medium text-center title-font text-gray-900 mb-4">Check Trade Status</h1>
+            <p class="text-base leading-relaxed xl:w-2/4 lg:w-3/4 mx-auto">Make trades, make mistakes, make profits!!!</p>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full table-auto bg-white rounded-lg">
+                <thead>
+                    <tr>
+                        <th class="px-4 py-2">TimeStamp</th>
+                        <th class="px-4 py-2">Analyst Name</th>
+                        <th class="px-4 py-2">Date</th>
+                        <th class="px-4 py-2">Scrip Name</th>
+                        <th class="px-4 py-2">Position</th>
+                        <th class="px-4 py-2">Entry Price</th>
+                        <th class="px-4 py-2">Target 1</th>
+                        <th class="px-4 py-2">Target 2</th>
+                        <th class="px-4 py-2">Stop Loss</th>
+                        <th class="px-4 py-2">Status</th>
+                        <th class="px-4 py-2">Remark</th>
+                        <th class="px-4 py-2">% Yeild</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for trade in user_trades %}
+                        <tr>
+                            <td class="border px-4 py-2">{{ trade.TimeStamp }}</td>
+                            <td class="border px-4 py-2">{{ trade.AnalystName }}</td>
+                            <td class="border px-4 py-2">{{ trade.Date }}</td>
+                            <td class="border px-4 py-2">{{ trade.ScripName }}</td>
+                            <td class="border px-4 py-2">{{ trade.Position }}</td>
+                            <td class="border px-4 py-2">{{ trade.EntryPrice }}</td>
+                            <td class="border px-4 py-2">{{ trade.Target1 }}</td>
+                            <td class="border px-4 py-2">{{ trade.Target2 }}</td>
+                            <td class="border px-4 py-2">{{ trade.StopLoss }}</td>
+                            <td class="border px-4 py-2">{{trade.Status}}</td>
+                            <td class="border px-4 py-2">{{ trade.Remark }}</td>
+                            <td class="border px-4 py-2">{{trade.GainLoss}}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="text-center mt-8">
+            <a href="{{ url_for('callbook') }}" class="text-white bg-indigo-500 border-0 py-2 px-8 focus:outline-none hover:bg-indigo-600 rounded text-lg">Make New Trade</a>
         </div>
     </section>
-    
 </body>
 </html>

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>CallBook Page</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link href="https://unpkg.com/tailwindcss@^1.0/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://unpkg.com/tailwindcss@^2.0/dist/tailwind.min.css" rel="stylesheet">
     <style>
         html, body {
             height: 100%;
@@ -13,46 +13,48 @@
 </head>
 <body>
     <section class="text-gray-600 body-font">
-        <div class="lg:w-2/6 md:w-1/2 bg-gray-100 rounded-lg p-8 flex flex-col md:ml-auto w-full mt-10 md:mt-0 mx-auto">
-            <h1 class="text-gray-900 text-lg font-medium title-font mb-5">Make a Trade:</h1>
-            <form method="POST" action="{{ url_for('callbook') }}">
-                <div class="relative mb-4">
-                    <label for="scripname" class="leading-7 text-sm text-gray-600">Scrip Name:</label>
-                    <select id="scripname" name="scripname" class="w-full bg-white rounded border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 text-base outline-none text-gray-700 py-2 px-3 leading-8 transition-colors duration-200 ease-in-out">
-                        {% for symbol in symbols %}
-                            <option value="{{ symbol }}">{{ symbol }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="relative mb-4">
-                    <label for="position" class="leading-7 text-sm text-gray-600">Position</label>
-                    <select id="position" name="position" class="w-full bg-white rounded border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 text-base outline-none text-gray-700 py-2 px-3 leading-8 transition-colors duration-200 ease-in-out">
-                        <option value="Long">Long</option>
-                        <option value="Short">Short</option>
-                    </select>
-                </div>
-                <div class="relative mb-4">
-                    <label for="Entry-Price" class="leading-7 text-sm text-gray-600">Entry Price:</label>
-                    <input type="float" id="Entry-Price" name="Entry-Price" class="w-full bg-white rounded border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 text-base outline-none text-gray-700 py-1 px-3 leading-8 transition-colors duration-200 ease-in-out">
-                </div>
-                <div class="relative mb-4">
-                    <label for="Target1" class="leading-7 text-sm text-gray-600">Target 1:</label>
-                    <input type="float" id="Target1" name="Target1" class="w-full bg-white rounded border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 text-base outline-none text-gray-700 py-1 px-3 leading-8 transition-colors duration-200 ease-in-out">
-                </div>
-                <div class="relative mb-4">
-                    <label for="Target2" class="leading-7 text-sm text-gray-600">Target 2:</label>
-                    <input type="float" id="Target2" name="Target2" class="w-full bg-white rounded border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 text-base outline-none text-gray-700 py-1 px-3 leading-8 transition-colors duration-200 ease-in-out">
-                </div>
-                <div class="relative mb-4">
-                    <label for="StopLoss" class="leading-7 text-sm text-gray-600">StopLoss:</label>
-                    <input type="float" id="StopLoss" name="StopLoss" class="w-full bg-white rounded border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 text-base outline-none text-gray-700 py-1 px-3 leading-8 transition-colors duration-200 ease-in-out">
-                </div>
-                <div class="relative mb-4">
-                    <label for="remark" class="leading-7 text-sm text-gray-600">Remark:</label>
-                    <input type="string" id="remark" name="remark" class="w-full bg-white rounded border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 text-base outline-none text-gray-700 py-1 px-3 leading-8 transition-colors duration-200 ease-in-out">
-                </div>
-                <button class="text-white bg-indigo-500 border-0 py-2 px-8 focus:outline-none hover:bg-indigo-600 rounded text-lg" type="submit" value="place">Place</button>
-            </form>
+        <div class="container px-5 py-24 mx-auto">
+            <div class="lg:w-2/3 md:w-1/2 bg-gray-100 rounded-lg p-8 mx-auto flex flex-col md:ml-auto w-full mt-10 md:mt-0">
+                <h1 class="text-gray-900 text-lg font-medium title-font mb-5 text-center">Make a Trade:</h1>
+                <form method="POST" action="{{ url_for('callbook') }}" class="space-y-6">
+                    <div class="relative">
+                        <label for="scripname" class="leading-7 text-sm text-gray-600">Scrip Name:</label>
+                        <select id="scripname" name="scripname" class="w-full bg-white rounded border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 text-base outline-none text-gray-700 py-2 px-3 leading-8 transition-colors duration-200 ease-in-out">
+                            {% for symbol in symbols %}
+                                <option value="{{ symbol }}">{{ symbol }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="relative">
+                        <label for="position" class="leading-7 text-sm text-gray-600">Position</label>
+                        <select id="position" name="position" class="w-full bg-white rounded border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 text-base outline-none text-gray-700 py-2 px-3 leading-8 transition-colors duration-200 ease-in-out">
+                            <option value="Long">Long</option>
+                            <option value="Short">Short</option>
+                        </select>
+                    </div>
+                    <div class="relative">
+                        <label for="Entry-Price" class="leading-7 text-sm text-gray-600">Entry Price:</label>
+                        <input type="float" id="Entry-Price" name="Entry-Price" class="w-full bg-white rounded border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 text-base outline-none text-gray-700 py-1 px-3 leading-8 transition-colors duration-200 ease-in-out">
+                    </div>
+                    <div class="relative">
+                        <label for="Target1" class="leading-7 text-sm text-gray-600">Target 1:</label>
+                        <input type="float" id="Target1" name="Target1" class="w-full bg-white rounded border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 text-base outline-none text-gray-700 py-1 px-3 leading-8 transition-colors duration-200 ease-in-out">
+                    </div>
+                    <div class="relative">
+                        <label for="Target2" class="leading-7 text-sm text-gray-600">Target 2:</label>
+                        <input type="float" id="Target2" name="Target2" class="w-full bg-white rounded border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 text-base outline-none text-gray-700 py-1 px-3 leading-8 transition-colors duration-200 ease-in-out">
+                    </div>
+                    <div class="relative">
+                        <label for="StopLoss" class="leading-7 text-sm text-gray-600">StopLoss:</label>
+                        <input type="float" id="StopLoss" name="StopLoss" class="w-full bg-white rounded border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 text-base outline-none text-gray-700 py-1 px-3 leading-8 transition-colors duration-200 ease-in-out">
+                    </div>
+                    <div class="relative">
+                        <label for="remark" class="leading-7 text-sm text-gray-600">Remark:</label>
+                        <input type="string" id="remark" name="remark" class="w-full bg-white rounded border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 text-base outline-none text-gray-700 py-1 px-3 leading-8 transition-colors duration-200 ease-in-out">
+                    </div>
+                    <button class="text-white bg-indigo-500 border-0 py-2 px-8 focus:outline-none hover:bg-indigo-600 rounded text-lg w-full" type="submit" value="place">Place</button>
+                </form>
+            </div>
         </div>
     </section>
 </body>
