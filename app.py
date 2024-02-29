@@ -283,14 +283,14 @@ def trades():
         return redirect(url_for('login'))
     
     user=User.query.filter_by(id=user_id).first()
-    for user in user:
-        decrypt_data_username=decrypt_data(user.username)
-        if decrypt_data_username == 'admin':
-            user_trades = CallBook.query.all()
-        else:
-            user_trades = CallBook.query.filter_by(user_id=user_id).all()
+    decrypt_data_username=decrypt_data(user.username)
+    if decrypt_data_username == 'admin':
+        user_trades = CallBook.query.all()
+    else:
+        user_trades = CallBook.query.filter_by(user_id=user_id).all()
 
     return render_template('trades.html', user_trades=user_trades)
+
 
 @app.route('/all-users', methods=['GET'])
 def all_users():
