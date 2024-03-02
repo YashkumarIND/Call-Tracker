@@ -1,3 +1,4 @@
+from espressoApi import EspressoConnect
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -7,9 +8,13 @@ from distutils.util import strtobool  # Import strtobool function
 from serpapi import GoogleSearch
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
-from models.models import db, User, CallBook
+from models.models import db, User, CallBook, AccessToken
 from encrypt import encrypt_data, decrypt_data
 import re
+import asyncio
+import json
+import websockets
+
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
@@ -35,7 +40,6 @@ scheduler.start()
 #         db.session.commit()
 
 # Define the update_trades route
-        
 @app.route('/api/update-trades', methods=['POST','GET'])
 def update_trades():
     with app.app_context():
@@ -177,6 +181,26 @@ def active_trades():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/espresso')
+def espresso():
+    # Render the espresso.html template
+    return render_template('espresso.html')
+
+
+#espresso api login link for the admin interface
+# Your Flask route to render espresso.html
+@app.route('/espresso-login')
+def espressoLogin():
+    # Logic to generate the login URL
+    api_key = "7bysRZCyXtO7xy9uxk9EtZbNMa2sH6qr"
+    espressoApi = EspressoConnect(api_key)
+    login_url = espressoApi.login_url()
+
+    # Render the espresso.html template with the login URL
+    return render_template('espresso.html', login_url=login_url)
+
+
+
 # Define the login route
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -191,12 +215,19 @@ def login():
             decrypted_password = decrypt_data(user.password)
             if decrypted_username == username and decrypted_password == password:
                 session['user_id'] = user.id
-                return redirect(url_for('callbook'))
 
+                if username == 'admin':
+                    api_key = "7bysRZCyXtO7xy9uxk9EtZbNMa2sH6qr"
+                    espressoApi = EspressoConnect(api_key)
+                    login_url = espressoApi.login_url()
+                    return render_template('espresso.html', login_url=login_url)
+                else:
+                    return redirect(url_for('callbook'))
         # If no matching user is found or incorrect credentials are provided
         flash('Invalid username/password', 'error')
 
     return render_template('login.html')
+
 
 # Define the callbook route
 @app.route('/callbook', methods=['GET', 'POST'])
@@ -351,6 +382,51 @@ def delete_all_data():
         print(f"Error deleting data: {str(e)}")
         return f"Error deleting data: {str(e)}", 500
     
+
+#api for price information using espresso
+@app.route('/get-price', methods=['GET'])
+async def get_price():
+    access_token = request.args.get('access_token')
+    share = request.args.get('share')
+
+    if access_token is None or share is None:
+        return jsonify({'error': 'Missing parameters'}), 400
+
+    api_key = "7bysRZCyXtO7xy9uxk9EtZbNMa2sH6"
+
+    async def websocket_handler(access_token, share):
+        uri = f"wss://streams.myespresso.com/espstream/api/stream?ACCESS_TOKEN={access_token}&API_KEY={api_key}"
+        feed = {"action": "feed", "key": ["ltp"], "value": [share]}
+
+        async with websockets.connect(uri) as ws:
+            await ws.send(json.dumps(feed))
+
+            while True:
+                try:
+                    message = await ws.recv()
+                    data = json.loads(message)
+                    data = data["data"]
+                    # Check if the received data is a list (JSON format)
+                    if isinstance(data, list):
+                        # Assuming the list contains a dictionary with key 'ltp', extract the 'ltp' value
+                        ltp_value = data[0]['ltp']
+                        print('LTP:', ltp_value)
+                        return jsonify({'ltp': ltp_value})
+
+                    # Check if the received data is a dictionary (non-JSON format)
+                    elif isinstance(data, dict) and 'status' in data and 'message' in data:
+                        print("Received non-JSON data:", data['message'])
+
+                except json.JSONDecodeError as e:
+                    print("Received non-JSON data:", message)
+                except Exception as ex:
+                    print("An error occurred:", ex)
+
+    # Run the WebSocket handler asynchronously
+    await websocket_handler(access_token, share)
+
+    # You can return a response immediately if needed
+    return jsonify({'message': 'WebSocket handler started'}), 200
 
 if __name__ == '__main__':
     app.run(debug=True)

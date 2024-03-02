@@ -34,3 +34,13 @@ class CallBook(db.Model):
     def __repr__(self):
         return f'<Trade {self.ScripName} - {self.EntryPrice}>'
 
+
+class AccessToken(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    accesstoken = db.Column(db.String(1000), unique=True, nullable=False)
+    TimeStamp = db.Column(db.TIMESTAMP, nullable=False)
+    
+
+    def __repr__(self):
+        return f'<User {self.accesstoken}>'
+
