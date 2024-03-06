@@ -155,6 +155,38 @@ def get_valid_access_token():
                 return access_token_entry.accesstoken
         return None
 
+# Define the login route
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        existing_users = User.query.all()
+
+        accesstoken_current=get_valid_access_token()
+
+        for user in existing_users:
+            decrypted_username = decrypt_data(user.username)
+            decrypted_password = decrypt_data(user.password)
+            if decrypted_username == username and decrypted_password == password:
+                session['user_id'] = user.id
+
+                if username == 'admin':
+                    if accesstoken_current is not None:
+                        return redirect(url_for('trades'))
+                    else:
+                        api_key = "7bysRZCyXtO7xy9uxk9EtZbNMa2sH6qr"
+                        espressoApi = EspressoConnect(api_key)
+                        login_url = espressoApi.login_url()
+                        return render_template('espresso.html', login_url=login_url)
+                else:
+                    return redirect(url_for('trades'))
+        # If no matching user is found or incorrect credentials are provided
+        flash('Invalid username/password', 'error')
+
+    return render_template('login.html')
+
 
 
 @app.route('/get-ltp', methods=['POST','GET'])
@@ -267,29 +299,23 @@ async def websocket_handler(share):
 
 
 
-
-
-
 @app.route('/api/update-trades', methods=['POST','GET'])
 async def update_trades():
         try:
                 active_trades = CallBook.query.filter(CallBook.Status == 'Hold').all()
-                
-                current_price = await websocket_handler("NC34")
-
-                return jsonify({"Share Price": current_price}), 200
-    
+  
                 for trade in active_trades:
                     # Retrieve trade details
-                    scrip_name = trade.ScripName
+                    
                     position = trade.Position
                     target1 = trade.Target1
                     target2 = trade.Target2
                     stop_loss = trade.StopLoss
                     entry_price = trade.EntryPrice
+                    scrip_Code=trade.scrip_Code
 
-
-                    current_price=asyncio.run(websocket_handler("NC25"))
+                    scrip_Code_string = f"NC{str(scrip_Code)}"
+                    current_price=await websocket_handler(scrip_Code_string)
 
                     
 
@@ -426,33 +452,6 @@ def espressoLogin():
 
 
 
-# Define the login route
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-
-        existing_users = User.query.all()
-
-        for user in existing_users:
-            decrypted_username = decrypt_data(user.username)
-            decrypted_password = decrypt_data(user.password)
-            if decrypted_username == username and decrypted_password == password:
-                session['user_id'] = user.id
-
-                if username == 'admin':
-                    api_key = "7bysRZCyXtO7xy9uxk9EtZbNMa2sH6qr"
-                    espressoApi = EspressoConnect(api_key)
-                    login_url = espressoApi.login_url()
-                    return render_template('espresso.html', login_url=login_url)
-                else:
-                    return redirect(url_for('trades'))
-        # If no matching user is found or incorrect credentials are provided
-        flash('Invalid username/password', 'error')
-
-    return render_template('login.html')
-
 
 #request token code
 @app.route('/request-token', methods=['GET'])
@@ -509,24 +508,30 @@ def trades():
     
     user = User.query.filter_by(id=user_id).first()
     decrypt_data_username = decrypt_data(user.username)
+    accesstoken_current = get_valid_access_token()
     
     if decrypt_data_username == 'admin':
         user_trades = CallBook.query.all()
-        api_key = "7bysRZCyXtO7xy9uxk9EtZbNMa2sH6qr"
-        secret_key = "BiR30xFE5S4XC9rT0aQcz1ZdAg3CyyBz"
-        request_token = request.args.get('request_token')
-        espressoApi = EspressoConnect(api_key)
-        sessionEspresso = espressoApi.generate_session(request_token, secret_key)   
-        access_token = espressoApi.get_access_token(api_key, sessionEspresso)
-        access_token = json.loads(access_token)
-        token = access_token["data"]["token"]
+        
+        if accesstoken_current is None:
+            api_key = "7bysRZCyXtO7xy9uxk9EtZbNMa2sH6qr"
+            secret_key = "BiR30xFE5S4XC9rT0aQcz1ZdAg3CyyBz"
+            request_token = request.args.get('request_token')
+            espressoApi = EspressoConnect(api_key)
+            sessionEspresso = espressoApi.generate_session(request_token, secret_key)   
+            access_token = espressoApi.get_access_token(api_key, sessionEspresso)
+            access_token = json.loads(access_token)
+            token = access_token["data"]["token"]
 
-        # Create an AccessToken instance and add it to the database session
-        access_token_entry = AccessToken(accesstoken=token, TimeStamp=datetime.now())
-        db.session.add(access_token_entry)
-        db.session.commit()
+            # Create an AccessToken instance and add it to the database session
+            access_token_entry = AccessToken(accesstoken=token, TimeStamp=datetime.now())
+            db.session.add(access_token_entry)
+            db.session.commit()
 
-        return render_template('trades.html',user_trades=user_trades)
+            return render_template('trades.html',user_trades=user_trades)
+        else:
+            return render_template('trades.html',user_trades=user_trades)
+        
     else:
         user_trades = CallBook.query.filter_by(user_id=user_id).all()
 
