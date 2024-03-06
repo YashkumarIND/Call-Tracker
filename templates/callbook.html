@@ -13,9 +13,20 @@
 </head>
 <body>
     <section class="text-gray-600 body-font">
-        <div class="container px-5 py-24 mx-auto">
+        <div class="container px-5 py-12 mx-auto">
             <div class="lg:w-2/3 md:w-1/2 bg-gray-100 rounded-lg p-8 mx-auto flex flex-col md:ml-auto w-full mt-10 md:mt-0">
                 <h1 class="text-gray-900 text-lg font-medium title-font mb-5 text-center">Make a Trade:</h1>
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="relative px-4 py-3 mb-4 border rounded bg-{{ category }}-200 border-{{ category }}-500">
+                                <span class="block sm:inline">{{ message }}</span>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                <!-- End Flash Messages -->
                 <form method="POST" action="{{ url_for('callbook') }}" class="space-y-6">
                     <div class="relative">
                         <label for="scripname" class="leading-7 text-sm text-gray-600">Scrip Name:</label>
@@ -34,27 +45,32 @@
                     </div>
                     <div class="relative">
                         <label for="Entry-Price" class="leading-7 text-sm text-gray-600">Entry Price:</label>
-                        <input type="float" id="Entry-Price" name="Entry-Price" class="w-full bg-white rounded border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 text-base outline-none text-gray-700 py-1 px-3 leading-8 transition-colors duration-200 ease-in-out">
+                        <input type="float" id="Entry-Price" name="Entry-Price" class="w-full bg-white rounded border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 text-base outline-none text-gray-700 py-2 px-2 leading-8 transition-colors duration-200 ease-in-out">
                     </div>
                     <div class="relative">
                         <label for="Target1" class="leading-7 text-sm text-gray-600">Target 1:</label>
-                        <input type="float" id="Target1" name="Target1" class="w-full bg-white rounded border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 text-base outline-none text-gray-700 py-1 px-3 leading-8 transition-colors duration-200 ease-in-out">
+                        <input type="float" id="Target1" name="Target1" class="w-full bg-white rounded border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 text-base outline-none text-gray-700 py-2 px-2 leading-8 transition-colors duration-200 ease-in-out">
                     </div>
                     <div class="relative">
                         <label for="Target2" class="leading-7 text-sm text-gray-600">Target 2:</label>
-                        <input type="float" id="Target2" name="Target2" class="w-full bg-white rounded border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 text-base outline-none text-gray-700 py-1 px-3 leading-8 transition-colors duration-200 ease-in-out">
+                        <input type="float" id="Target2" name="Target2" class="w-full bg-white rounded border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 text-base outline-none text-gray-700 py-2 px-2 leading-8 transition-colors duration-200 ease-in-out">
                     </div>
                     <div class="relative">
                         <label for="StopLoss" class="leading-7 text-sm text-gray-600">StopLoss:</label>
-                        <input type="float" id="StopLoss" name="StopLoss" class="w-full bg-white rounded border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 text-base outline-none text-gray-700 py-1 px-3 leading-8 transition-colors duration-200 ease-in-out">
+                        <input type="float" id="StopLoss" name="StopLoss" class="w-full bg-white rounded border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 text-base outline-none text-gray-700 py-2 px-2 leading-8 transition-colors duration-200 ease-in-out">
                     </div>
                     <div class="relative">
                         <label for="remark" class="leading-7 text-sm text-gray-600">Remark:</label>
-                        <input type="string" id="remark" name="remark" class="w-full bg-white rounded border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 text-base outline-none text-gray-700 py-1 px-3 leading-8 transition-colors duration-200 ease-in-out">
+                        <input type="string" id="remark" name="remark" class="w-full bg-white rounded border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 text-base outline-none text-gray-700 py-2 px-2 leading-8 transition-colors duration-200 ease-in-out">
                     </div>
                     <button class="text-white bg-indigo-500 border-0 py-2 px-8 focus:outline-none hover:bg-indigo-600 rounded text-lg w-full" type="submit" value="place">Place</button>
                 </form>
             </div>
+        </div>
+        <div class="text-center mt-8">
+            <a href="{{ url_for('logout') }}" class="text-white bg-red-500 border-0 py-2 px-8 focus:outline-none hover:bg-red-600 rounded-full lg:fixed lg:top-0 lg:right-0 lg:mr-4 lg:mt-4 text-lg">
+                Logout
+            </a>
         </div>
     </section>
 </body>
