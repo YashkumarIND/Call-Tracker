@@ -51,6 +51,11 @@
                 </tbody>
             </table>
         </div>
+        {% if is_admin %}
+        <div class="text-center mt-8">
+            <button onclick="updateTrades()" class="text-white bg-green-500 border-0 py-2 px-8 focus:outline-none hover:bg-green-600 rounded text-lg">Update Trades</button>
+        </div>
+        {% endif %}
 
         <div class="text-center mt-8">
             <a href="{{ url_for('callbook') }}" class="text-white bg-indigo-500 border-0 py-2 px-8 focus:outline-none hover:bg-indigo-600 rounded text-lg">Make New Trade</a>
@@ -62,7 +67,42 @@
             </a>
         </div>
         
-
+        <!-- Popup to display update message -->
+        <div id="updateMessage" class="fixed top-0 left-0 w-full h-full flex items-center justify-center hidden">
+            <div class="absolute bg-white w-80 p-8 rounded shadow-lg">
+                <p id="messageContent" class="text-center text-lg"></p>
+                <button id="closePopup" class="block w-full text-center bg-blue-500 text-white px-4 py-2 mt-4 rounded-md">Close</button>
+            </div>
+        </div>
     </section>
+
+    <script>
+        function updateTrades() {
+            // Make an API call to update trades
+            fetch('/api/update-trades', {
+                method: 'POST',
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json(); // Parse the JSON response
+                } else {
+                    throw new Error('Failed to update trades');
+                }
+            })
+            .then(data => {
+                // Display the update message in the popup
+                document.getElementById('messageContent').textContent = data.message;
+                document.getElementById('updateMessage').classList.remove('hidden');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+
+        // Add event listener to close the popup when the close button is clicked
+        document.getElementById('closePopup').addEventListener('click', function() {
+            document.getElementById('updateMessage').classList.add('hidden');
+        });
+    </script>
 </body>
 </html>

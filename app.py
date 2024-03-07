@@ -7,6 +7,7 @@ from flask_migrate import Migrate
 from datetime import datetime
 from distutils.util import strtobool  
 from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from models.models import db, User, CallBook, AccessToken, ScripCode
 from encrypt import encrypt_data, decrypt_data
@@ -14,6 +15,9 @@ import re
 import asyncio
 from dotenv import load_dotenv
 import os
+import tracemalloc
+
+tracemalloc.start()
 
 load_dotenv()
 
@@ -35,6 +39,10 @@ scheduler.start()
 
 def callbook_checker(position, entryprice, target1, target2, stoploss):
     try:
+         # Check if any of the input values are null or empty
+        if not all((position, entryprice, target1, target2, stoploss)):
+            return False, "Please provide all required input values."
+        
         if position == "Long":
             if target1 < entryprice or target2 < entryprice: 
                 return False, "Check Targets, they seem to be less than Entry Price for a Long Trade!"
@@ -42,7 +50,7 @@ def callbook_checker(position, entryprice, target1, target2, stoploss):
                 return False, "Keep stoploss less than Entry Price for a Long Trade!"
             if target2 < target1: 
                 return False, "Target 2 should be larger than Target 1 for a Long Trade!"
-            if stoploss > target1 or stoploss > target2 or stoploss > entryprice:
+            if stoploss > target1 or stoploss > target2:
                 return False, "Keep Stop Loss less than Targets and Entry Price for a Long Trade!"
 
         elif position == "Short":
@@ -52,7 +60,7 @@ def callbook_checker(position, entryprice, target1, target2, stoploss):
                 return False, "Keep stoploss greater than Entry Price for a Short Trade!"
             if target2 > target1:
                 return False, "Target 2 should be smaller than Target 1 for a Short Trade!"
-            if stoploss < target1 or stoploss < target2 or stoploss < entryprice:
+            if stoploss < target1 or stoploss < target2:
                 return False, "Keep Stop Loss greater than Targets and Entry Price for a Short Trade!"
         
         # All conditions passed if reached here
@@ -259,55 +267,57 @@ async def websocket_handler(share):
 @app.route('/api/update-trades', methods=['POST','GET'])
 async def update_trades():
         try:
-                active_trades = CallBook.query.filter(CallBook.Status == 'Hold').all()
+                active_trades = CallBook.query.filter(CallBook.Status == 'Hold' or CallBook.Status!='Target 2 Hit' or CallBook.Status!='Stop Loss Hit').all()
   
-                for trade in active_trades:
-                    
-                    
-                    position = trade.Position
-                    target1 = trade.Target1
-                    target2 = trade.Target2
-                    stop_loss = trade.StopLoss
-                    entry_price = trade.EntryPrice
-                    scrip_Code=trade.scrip_Code
+                if len(active_trades)<1:
+                    return jsonify({'message': 'No active trades to update now!'}), 200
+                
+                else:
+                    for trade in active_trades:
+                        
+                        
+                        position = trade.Position
+                        target1 = trade.Target1
+                        target2 = trade.Target2
+                        stop_loss = trade.StopLoss
+                        entry_price = trade.EntryPrice
+                        scrip_Code=trade.scrip_Code
 
-                    scrip_Code_string = f"NC{str(scrip_Code)}"
-                    current_price=await websocket_handler(scrip_Code_string)
+                        scrip_Code_string = f"NC{str(scrip_Code)}"
+                        current_price=await websocket_handler(scrip_Code_string)
 
-                    
-
-                    
-                    if position == 'Long':
-                        if current_price >= target1 and current_price < target2:
-                            status = 'Target 1 Hit'
-                        elif current_price >= target2:
-                            status = 'Target 2 Hit'
-                        elif current_price <= stop_loss:
-                            status = 'Stop Loss Hit'
+                        
+                        if position == 'Long':
+                            if current_price >= target1 and current_price < target2:
+                                status = 'Target 1 Hit'
+                            elif current_price >= target2:
+                                status = 'Target 2 Hit'
+                            elif current_price <= stop_loss:
+                                status = 'Stop Loss Hit'
+                            else:
+                                status = 'Hold'
+                        elif position == 'Short':
+                            if current_price <= target1 and current_price > target2:
+                                status = 'Target 1 Hit'
+                            elif current_price <= target2:
+                                status = 'Target 2 Hit'
+                            elif current_price >= stop_loss:
+                                status = 'Stop Loss Hit'
+                            else:
+                                status = 'Hold'
                         else:
-                            status = 'Hold'
-                    elif position == 'Short':
-                        if current_price <= target1 and current_price > target2:
-                            status = 'Target 1 Hit'
-                        elif current_price <= target2:
-                            status = 'Target 2 Hit'
-                        elif current_price >= stop_loss:
-                            status = 'Stop Loss Hit'
-                        else:
-                            status = 'Hold'
-                    else:
-                        status = 'Invalid Position'
+                            status = 'Invalid Position'
 
 
-                    
-                    gain_loss = round(((current_price - entry_price) / entry_price * 100),2)
+                        
+                        gain_loss = round(((current_price - entry_price) / entry_price * 100),2)
 
-                    
-                    trade.Status = status
-                    trade.GainLoss=gain_loss
-                    db.session.commit()
+                        
+                        trade.Status = status
+                        trade.GainLoss=gain_loss
+                        db.session.commit()
 
-                return jsonify({'message': 'Trades updated successfully'}), 200
+                    return jsonify({'message': 'Trades updated successfully'}), 200
 
         except Exception as e:
             # Handle the exception (e.g., log error)
@@ -317,10 +327,13 @@ async def update_trades():
 
 
 # Schedule the update_trades function to run every 15 minutes from 9:15 AM to 3:30 PM, Monday to Friday
-scheduler = BackgroundScheduler()
+scheduler = AsyncIOScheduler()
 scheduler.add_job(
     update_trades,
-    trigger=CronTrigger(day_of_week='mon-fri', hour='9-16', minute='*/15')
+    trigger='cron',
+    day_of_week='mon-fri',
+    hour='9-16',
+    minute='*/15'
 )
 scheduler.start()
 
@@ -363,7 +376,7 @@ def all_trades():
 def active_trades():
     try:
         
-        trades = CallBook.query.filter(CallBook.Status == 'Hold' or CallBook.Status!='Target 2 Hit').all()
+        trades = CallBook.query.filter(CallBook.Status == 'Hold' or CallBook.Status!='Target 2 Hit' or CallBook.Status!='Stop Loss Hit').all()
 
         
         trades_data = []
@@ -466,9 +479,15 @@ def trades():
     user = User.query.filter_by(id=user_id).first()
     decrypt_data_username = decrypt_data(user.username)
     accesstoken_current = get_valid_access_token()
+
+    is_admin = False
     
     if decrypt_data_username == 'admin':
+
+        is_admin = True
+
         user_trades = CallBook.query.all()
+
         
         if accesstoken_current is None:
             api_key = os.getenv("ESPRESSO_API_KEY")
@@ -485,14 +504,14 @@ def trades():
             db.session.add(access_token_entry)
             db.session.commit()
 
-            return render_template('trades.html',user_trades=user_trades)
+            return render_template('trades.html',user_trades=user_trades, is_admin=is_admin)
         else:
-            return render_template('trades.html',user_trades=user_trades)
+            return render_template('trades.html',user_trades=user_trades, is_admin=is_admin)
         
     else:
         user_trades = CallBook.query.filter_by(user_id=user_id).all()
 
-    return render_template('trades.html', user_trades=user_trades)
+    return render_template('trades.html', user_trades=user_trades, is_admin=is_admin)
 
 
 @app.route('/accesstokens', methods=['GET'])
@@ -577,45 +596,30 @@ def delete_trades():
 @app.route('/delete-all-data', methods=['DELETE'])
 def delete_all_data():
     try:
-        
         with app.app_context():
-            
+            # Delete data from User table
             db.session.query(User).delete()
-            db.session.commit()
-            
-            
+
+            # Delete data from CallBook table
             db.session.query(CallBook).delete()
+
+            # Delete data from AccessToken table
+            db.session.query(AccessToken).delete()
+
+            # Commit the changes
             db.session.commit()
 
         print("All data deleted successfully.")
         return "All data deleted successfully.", 200
 
     except Exception as e:
-        
+        # Rollback changes if an error occurs
         db.session.rollback()
         print(f"Error deleting data: {str(e)}")
         return f"Error deleting data: {str(e)}", 500
+
     
 
-@app.route('/delete-all-scripcode', methods=['DELETE'])
-def delete_all_scripcode():
-    try:
-        
-        with app.app_context():
-            
-            db.session.query(AccessToken).delete()
-            db.session.commit()
-            
-            
-        print("All scripcodes deleted successfully.")
-        return "All scripcodes deleted successfully.", 200
-
-    except Exception as e:
-        
-        db.session.rollback()
-        print(f"Error deleting data: {str(e)}")
-        return f"Error deleting data: {str(e)}", 500
-    
 
 @app.route('/logout',methods=['GET'])
 def logout():
