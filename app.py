@@ -514,8 +514,7 @@ def trades():
         
     else:
         user_trades = CallBook.query.filter_by(user_id=user_id).all()
-
-    return render_template('trades.html', user_trades=user_trades, is_admin=is_admin)
+        return render_template('trades.html', user_trades=user_trades, is_admin=is_admin)
 
 
 @app.route('/accesstokens', methods=['GET'])
