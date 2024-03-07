@@ -36,6 +36,10 @@ scheduler = BackgroundScheduler()
 scheduler.start()
 
 
+@app.route('/')
+def index():
+    return redirect(url_for('signup'))
+
 
 def callbook_checker(position, entryprice, target1, target2, stoploss):
     try:
@@ -631,6 +635,6 @@ def logout():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=5000)
     
     
