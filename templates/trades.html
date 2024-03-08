@@ -93,6 +93,11 @@
                 // Display the update message in the popup
                 document.getElementById('messageContent').textContent = data.message;
                 document.getElementById('updateMessage').classList.remove('hidden');
+
+                // Reload the page after 2 seconds
+                setTimeout(function() {
+                    window.location.reload();
+                }, 1000); // Adjust the delay as needed
             })
             .catch(error => {
                 console.error('Error:', error);
