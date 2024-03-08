@@ -1,5 +1,6 @@
 from espressoApi import EspressoConnect
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify,  json
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required
 import websockets
 from datetime import timedelta
 from flask_sqlalchemy import SQLAlchemy
@@ -15,6 +16,7 @@ import re
 import asyncio
 from dotenv import load_dotenv
 import os
+import jwt
 import tracemalloc
 
 tracemalloc.start()
@@ -26,6 +28,9 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = os.getenv("APP_SECRET_KEY_SQLALCHEMY")
+
+# Configure JWT secret key
+app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
 
 
 # Initialize SQLAlchemy and migrate
@@ -39,6 +44,83 @@ scheduler.start()
 @app.route('/')
 def index():
     return redirect(url_for('signup'))
+
+    # Function to generate JWT token
+def generate_token(user_id):
+    payload = {
+        'user_id': user_id,
+        'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=60)  # Token expiration time
+    }
+    token = jwt.encode(payload, app.config['JWT_SECRET_KEY'], algorithm='HS256')
+    return token
+
+
+@app.route('/signup', methods=['GET', 'POST'])
+def signup():
+    if request.method == 'POST':
+        username = request.form['uniqueusername']
+        password = request.form['password']
+        confirm_password = request.form['confirmpassword']
+
+        
+        if password != confirm_password:
+            flash('Passwords do not match. Please try again.', 'error')
+            return redirect(url_for('signup'))
+
+        
+        existing_users = User.query.all()
+        for user in existing_users:
+            decrypted_username = decrypt_data(user.username)
+            if decrypted_username == username:
+                flash('Username already exists. Please choose a different one.', 'error')
+                return redirect(url_for('signup'))
+
+        
+        encrypt_username = encrypt_data(username)
+        encrypt_password = encrypt_data(password)
+
+        
+        new_user = User(username=encrypt_username, password=encrypt_password)
+        db.session.add(new_user)
+        db.session.commit()
+
+        flash('Sign up successful. Please log in.', 'success')
+        return redirect(url_for('login'))
+    
+    return render_template('signup.html')
+
+
+# Define the login route
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        existing_users = User.query.all()
+
+        accesstoken_current=get_valid_access_token()
+
+        for user in existing_users:
+            decrypted_username = decrypt_data(user.username)
+            decrypted_password = decrypt_data(user.password)
+            if decrypted_username == username and decrypted_password == password:
+                session['user_id'] = user.id
+
+                if username == 'admin':
+                    if accesstoken_current is not None:
+                        return redirect(url_for('trades'))
+                    else:
+                        api_key = os.getenv("ESPRESSO_API_KEY")
+                        espressoApi = EspressoConnect(api_key)
+                        login_url = espressoApi.login_url()
+                        return render_template('espresso.html', login_url=login_url)
+                else:
+                    return redirect(url_for('trades'))
+       
+        flash('Invalid username/password', 'error')
+
+    return render_template('login.html')
 
 
 def callbook_checker(position, entryprice, target1, target2, stoploss):
@@ -192,37 +274,7 @@ def get_valid_access_token():
                 return access_token_entry.accesstoken
         return None
 
-# Define the login route
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
 
-        existing_users = User.query.all()
-
-        accesstoken_current=get_valid_access_token()
-
-        for user in existing_users:
-            decrypted_username = decrypt_data(user.username)
-            decrypted_password = decrypt_data(user.password)
-            if decrypted_username == username and decrypted_password == password:
-                session['user_id'] = user.id
-
-                if username == 'admin':
-                    if accesstoken_current is not None:
-                        return redirect(url_for('trades'))
-                    else:
-                        api_key = os.getenv("ESPRESSO_API_KEY")
-                        espressoApi = EspressoConnect(api_key)
-                        login_url = espressoApi.login_url()
-                        return render_template('espresso.html', login_url=login_url)
-                else:
-                    return redirect(url_for('trades'))
-       
-        flash('Invalid username/password', 'error')
-
-    return render_template('login.html')
 
 
 
@@ -438,39 +490,6 @@ def request_token():
 
 # Define the callbook route
 
-@app.route('/signup', methods=['GET', 'POST'])
-def signup():
-    if request.method == 'POST':
-        username = request.form['uniqueusername']
-        password = request.form['password']
-        confirm_password = request.form['confirmpassword']
-
-        
-        if password != confirm_password:
-            flash('Passwords do not match. Please try again.', 'error')
-            return redirect(url_for('signup'))
-
-        
-        existing_users = User.query.all()
-        for user in existing_users:
-            decrypted_username = decrypt_data(user.username)
-            if decrypted_username == username:
-                flash('Username already exists. Please choose a different one.', 'error')
-                return redirect(url_for('signup'))
-
-        
-        encrypt_username = encrypt_data(username)
-        encrypt_password = encrypt_data(password)
-
-        
-        new_user = User(username=encrypt_username, password=encrypt_password)
-        db.session.add(new_user)
-        db.session.commit()
-
-        flash('Sign up successful. Please log in.', 'success')
-        return redirect(url_for('login'))
-    
-    return render_template('signup.html')
 
 
 @app.route('/trades')
@@ -627,6 +646,7 @@ def delete_all_data():
 @app.route('/logout',methods=['GET'])
 def logout():
     try:
+        session.pop('user_id', None)
         return redirect(url_for('login')), 200
     except Exception as e:
         
