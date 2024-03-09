@@ -382,16 +382,16 @@ async def update_trades():
 
 
 
-# Schedule the update_trades function to run every 15 minutes from 9:15 AM to 3:30 PM, Monday to Friday
-scheduler = AsyncIOScheduler()
-scheduler.add_job(
-    update_trades,
-    trigger='cron',
-    day_of_week='mon-fri',
-    hour='9-16',
-    minute='*/15'
-)
-scheduler.start()
+# # Schedule the update_trades function to run every 15 minutes from 9:15 AM to 3:30 PM, Monday to Friday
+# scheduler = AsyncIOScheduler()
+# scheduler.add_job(
+#     update_trades,
+#     trigger='cron',
+#     day_of_week='mon-fri',
+#     hour='9-16',
+#     minute='*/15'
+# )
+# scheduler.start()
 
 # Define the route to retrieve all trades
 @app.route('/api/all-trades', methods=['GET'])
