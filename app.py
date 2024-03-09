@@ -30,7 +30,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = os.getenv("APP_SECRET_KEY_SQLALCHEMY")
 
 # Configure JWT secret key
-app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
+# app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
 
 
 # Initialize SQLAlchemy and migrate
@@ -45,14 +45,14 @@ scheduler.start()
 def index():
     return redirect(url_for('signup'))
 
-    # Function to generate JWT token
-def generate_token(user_id):
-    payload = {
-        'user_id': user_id,
-        'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=60)  # Token expiration time
-    }
-    token = jwt.encode(payload, app.config['JWT_SECRET_KEY'], algorithm='HS256')
-    return token
+#     # Function to generate JWT token
+# def generate_token(user_id):
+#     payload = {
+#         'user_id': user_id,
+#         'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=60)  # Token expiration time
+#     }
+#     token = jwt.encode(payload, app.config['JWT_SECRET_KEY'], algorithm='HS256')
+#     return token
 
 
 @app.route('/signup', methods=['GET', 'POST'])
@@ -601,44 +601,44 @@ def all_users():
 
 
 
-@app.route('/delete-trades', methods=['DELETE'])
-def delete_trades():
-    with app.app_context():
-        try:
-            db.session.query(CallBook).delete()
-            db.session.commit()
-            print("All trades deleted successfully.")
-            return "All trades deleted successfully."
-        except Exception as e:
-            db.session.rollback()
-            print(f"Error deleting trades: {str(e)}")
-            return f"Error deleting trades: {str(e)}", 500
+# @app.route('/delete-trades', methods=['DELETE'])
+# def delete_trades():
+#     with app.app_context():
+#         try:
+#             db.session.query(CallBook).delete()
+#             db.session.commit()
+#             print("All trades deleted successfully.")
+#             return "All trades deleted successfully."
+#         except Exception as e:
+#             db.session.rollback()
+#             print(f"Error deleting trades: {str(e)}")
+#             return f"Error deleting trades: {str(e)}", 500
 
 
-@app.route('/delete-all-data', methods=['DELETE'])
-def delete_all_data():
-    try:
-        with app.app_context():
-            # Delete data from User table
-            db.session.query(User).delete()
+# @app.route('/delete-all-data', methods=['DELETE'])
+# def delete_all_data():
+#     try:
+#         with app.app_context():
+#             # Delete data from User table
+#             db.session.query(User).delete()
 
-            # Delete data from CallBook table
-            db.session.query(CallBook).delete()
+#             # Delete data from CallBook table
+#             db.session.query(CallBook).delete()
 
-            # Delete data from AccessToken table
-            db.session.query(AccessToken).delete()
+#             # Delete data from AccessToken table
+#             db.session.query(AccessToken).delete()
 
-            # Commit the changes
-            db.session.commit()
+#             # Commit the changes
+#             db.session.commit()
 
-        print("All data deleted successfully.")
-        return "All data deleted successfully.", 200
+#         print("All data deleted successfully.")
+#         return "All data deleted successfully.", 200
 
-    except Exception as e:
-        # Rollback changes if an error occurs
-        db.session.rollback()
-        print(f"Error deleting data: {str(e)}")
-        return f"Error deleting data: {str(e)}", 500
+#     except Exception as e:
+#         # Rollback changes if an error occurs
+#         db.session.rollback()
+#         print(f"Error deleting data: {str(e)}")
+#         return f"Error deleting data: {str(e)}", 500
 
     
 
